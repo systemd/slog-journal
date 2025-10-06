@@ -206,6 +206,7 @@ func (h *Handler) appendKV(b []byte, k string, v []byte) []byte {
 		b = append(b, '\n')
 		b = binary.LittleEndian.AppendUint64(b, uint64(len(v)))
 		b = append(b, v...)
+		b = append(b, '\n')
 	} else {
 		b = append(b, k...)
 		b = append(b, '=')

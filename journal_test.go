@@ -203,6 +203,30 @@ func TestReplaceGroup(t *testing.T) {
 	}
 }
 
+func TestMessagesWithNewlines(t *testing.T) {
+	buf := new(bytes.Buffer)
+	handler, err := NewHandler(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler.w = buf
+
+	record := slog.NewRecord(time.Now(), slog.LevelInfo, "Line 1\nLine 2\nLine 3", 0)
+	record.AddAttrs(slog.Attr{Key: "MULTILINE_ATTR", Value: slog.StringValue("value1\nvalue2")})
+
+	_ = handler.Handle(context.TODO(), record)
+	kv, err := deserializeKeyValue(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if kv["MESSAGE"] != "Line 1\nLine 2\nLine 3" {
+		t.Errorf("Expected multiline message, got: %q", kv["MESSAGE"])
+	}
+	if kv["MULTILINE_ATTR"] != "value1\nvalue2" {
+		t.Errorf("Expected multiline attribute, got: %q", kv["MULTILINE_ATTR"])
+	}
+}
+
 func createNestedMap(m map[string]any, keys []string, value any) {
 	for i, key := range keys {
 		if i == len(keys)-1 {
