@@ -9,6 +9,12 @@ import (
 	"syscall"
 )
 
+// socket to journald
+// for testing purposes only - the socket path can be changed at runtime
+// if it will be set (e.g. to "/tmp/journal.socket") the writer will send the message on that socket
+// and not on the default one ("/run/systemd/journal/socket")
+var TESTING_SOCKET_PATH = ""
+
 // journalWriter encapsulates the behaviour of writing unixgrams to the journal socket.
 // It will try to write the message with a single write call, but if the message is too large
 // it will write the message to a temporary file and send the file descriptor as OOB data.
@@ -44,8 +50,14 @@ func newJournalWriter() (io.Writer, error) {
 		return nil, err
 	}
 
+	socketName := "/run/systemd/journal/socket"
+	// we respect TESTING_SOCKET_PATH - for testing purposes only
+	if TESTING_SOCKET_PATH != "" {
+		socketName = TESTING_SOCKET_PATH
+	}
+
 	addr := &net.UnixAddr{
-		Name: "/run/systemd/journal/socket",
+		Name: socketName,
 		Net:  "unixgram",
 	}
 
